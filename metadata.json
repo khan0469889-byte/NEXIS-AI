@@ -1,0 +1,6 @@
+{
+  "name": "Nexis AI",
+  "description": "Next-generation intelligence system with Gemini 4 Argon high-reasoning, real-time data integration, human-like voice synthesis, and offline resilience.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
