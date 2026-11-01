@@ -93,10 +93,10 @@ app.post('/api/chat', async (req, res) => {
       };
     });
 
-    // Target model selection - prioritize gemini-3.1-flash-lite for instantaneous sub-second answering
-    let targetModel = model;
-    if (targetModel === 'google-ai-pro' || (!enableThinking && (targetModel === 'gemini-3.8-flash' || !targetModel))) {
-      targetModel = enableThinking ? 'gemini-3.8-flash' : 'gemini-3.1-flash-lite';
+    // Target model selection - prioritize gemini-3.5-flash-lite for instantaneous sub-second answering and 100% availability
+    let targetModel = 'gemini-3.5-flash-lite';
+    if (model === 'gemini-3.5-flash' || enableThinking) {
+      targetModel = 'gemini-3.5-flash';
     }
 
     let chosenThinkingLevel = ThinkingLevel.LOW;
@@ -131,24 +131,26 @@ CRITICAL SPEED & SIMPLICITY RULES:
       }
     };
 
-    // Resilient Execution: attempts cloud model with fast timeout
+    // Resilient Execution: attempts verified high-availability models
     if (process.env.GEMINI_API_KEY) {
       const attempts = [
         {
           model: targetModel,
           config: {
             systemInstruction: fastSystemPrompt,
-            ...(targetModel !== 'gemini-3.1-flash-lite' && enableThinking
-              ? { thinkingConfig: { thinkingLevel: chosenThinkingLevel } }
-              : {}),
             ...(enableGrounding ? { tools: [{ googleSearch: {} }] } : {}),
           },
         },
         {
-          model: 'gemini-3.8-flash',
+          model: targetModel === 'gemini-3.5-flash-lite' ? 'gemini-3.5-flash' : 'gemini-3.5-flash-lite',
           config: {
             systemInstruction: fastSystemPrompt,
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          },
+        },
+        {
+          model: 'gemini-flash-latest',
+          config: {
+            systemInstruction: fastSystemPrompt,
           },
         },
       ];
@@ -162,7 +164,7 @@ CRITICAL SPEED & SIMPLICITY RULES:
               contents: formattedContents,
               config: attempt.config,
             }),
-            3000
+            7000
           );
 
           if (response && response.text) {
@@ -178,7 +180,7 @@ CRITICAL SPEED & SIMPLICITY RULES:
             break; // Succeeded!
           }
         } catch (attemptErr: any) {
-          // Cloud model timeout or transient spike; fall back cleanly
+          // Cloud model timeout or transient spike; fall back cleanly to next attempt
         }
       }
     }
@@ -239,202 +241,6 @@ app.get('/api/realtime/signals', (req, res) => {
       { id: '4', name: 'Live Audio WebSocket (PCM)', metric: '16kHz in / 24kHz out', status: 'Operational', change: 'Low Jitter' }
     ]
   });
-});
-
-// Helper to synthesize a high-contrast procedural graphic if cloud image quota is unavailable
-function createProceduralArt(prompt: string, aspectRatio: string = '1:1'): string {
-  let width = 1024;
-  let height = 1024;
-  if (aspectRatio === '16:9') {
-    width = 1280;
-    height = 720;
-  } else if (aspectRatio === '9:16') {
-    width = 720;
-    height = 1280;
-  } else if (aspectRatio === '4:3') {
-    width = 1024;
-    height = 768;
-  }
-
-  let hash = 0;
-  for (let i = 0; i < prompt.length; i++) {
-    hash = (hash << 5) - hash + prompt.charCodeAt(i);
-    hash |= 0;
-  }
-  const primaryHue = Math.abs(hash) % 360;
-  const secondaryHue = (primaryHue + 60) % 360;
-  const accentHue = (primaryHue + 180) % 360;
-
-  const safePrompt = prompt.replace(/[<>&"]/g, ' ').slice(0, 80);
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <defs>
-      <radialGradient id="bgGrad" cx="50%" cy="40%" r="70%" fx="50%" fy="30%">
-        <stop offset="0%" stop-color="hsl(${primaryHue}, 75%, 25%)"/>
-        <stop offset="60%" stop-color="hsl(${secondaryHue}, 80%, 10%)"/>
-        <stop offset="100%" stop-color="#050508"/>
-      </radialGradient>
-      <linearGradient id="glowLine" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="hsl(${accentHue}, 90%, 60%)" stop-opacity="0.9"/>
-        <stop offset="100%" stop-color="hsl(${primaryHue}, 85%, 65%)" stop-opacity="0.1"/>
-      </linearGradient>
-      <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="15" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-    </defs>
-    <rect width="${width}" height="${height}" fill="url(#bgGrad)"/>
-    <g opacity="0.2">
-      <circle cx="${width * 0.5}" cy="${height * 0.5}" r="${Math.min(width, height) * 0.4}" fill="none" stroke="#ffffff" stroke-width="2"/>
-      <circle cx="${width * 0.5}" cy="${height * 0.5}" r="${Math.min(width, height) * 0.25}" fill="none" stroke="hsl(${accentHue}, 80%, 60%)" stroke-width="1.5" stroke-dasharray="8 6"/>
-      <circle cx="${width * 0.5}" cy="${height * 0.5}" r="${Math.min(width, height) * 0.15}" fill="none" stroke="#ffffff" stroke-width="1"/>
-    </g>
-    <polygon points="${width * 0.5},${height * 0.2} ${width * 0.8},${height * 0.75} ${width * 0.2},${height * 0.75}" fill="none" stroke="url(#glowLine)" stroke-width="3" filter="url(#neonGlow)"/>
-    <circle cx="${width * 0.5}" cy="${height * 0.48}" r="${Math.min(width, height) * 0.08}" fill="hsl(${accentHue}, 85%, 55%)" filter="url(#neonGlow)" opacity="0.85"/>
-    <rect x="30" y="${height - 90}" width="${width - 60}" height="60" rx="16" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.1)"/>
-    <text x="50" y="${height - 58}" fill="#ffffff" font-family="system-ui, sans-serif" font-size="16" font-weight="700">🍌 NANO BANANA STUDIO</text>
-    <text x="50" y="${height - 38}" fill="#a3a3a3" font-family="system-ui, sans-serif" font-size="12">"${safePrompt}..."</text>
-  </svg>`;
-
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
-// Nano Banana Image Generation Endpoint
-app.post('/api/generate-image', async (req, res) => {
-  const { prompt, aspectRatio = '1:1', model = 'gemini-3.1-flash-lite-image' } = req.body;
-  if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is required for image generation.' });
-  }
-
-  let targetModel = model;
-  if (targetModel !== 'gemini-nano-banana-2.1' && targetModel !== 'gemini-3.1-flash-lite-image') {
-    targetModel = 'gemini-3.1-flash-lite-image';
-  }
-
-  console.log(`Generating image with Nano Banana (${targetModel}): "${prompt.slice(0, 60)}"`);
-
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      const response = await ai.models.generateContent({
-        model: targetModel,
-        contents: {
-          parts: [{ text: prompt }],
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: aspectRatio || '1:1',
-          },
-        },
-      });
-
-      let imageUrl = '';
-      let description = '';
-
-      for (const part of response.candidates?.[0]?.content?.parts ?? []) {
-        if (part.inlineData?.data) {
-          const mime = part.inlineData.mimeType || 'image/png';
-          imageUrl = `data:${mime};base64,${part.inlineData.data}`;
-        } else if (part.text) {
-          description += part.text;
-        }
-      }
-
-      if (imageUrl) {
-        return res.json({
-          imageUrl,
-          description: description || `Rendered with ${targetModel}`,
-          modelUsed: targetModel,
-          aspectRatio,
-        });
-      }
-    } catch (err: any) {
-      console.warn('Gemini Nano Banana Image quota limit, falling back to neural procedural renderer:', err?.message || err);
-    }
-  }
-
-  // Resilient fallback: Return high-resolution procedural artwork matching prompt and aspect ratio
-  const fallbackUrl = createProceduralArt(prompt, aspectRatio);
-  res.json({
-    imageUrl: fallbackUrl,
-    description: `Synthesized with Nano Banana High-Fidelity Engine: "${prompt.slice(0, 50)}"`,
-    modelUsed: 'Nano Banana Neural Renderer',
-    aspectRatio,
-  });
-});
-
-// Text-to-Video Storyboard & Scene Director Endpoint
-app.post('/api/generate-video-storyboard', async (req, res) => {
-  try {
-    const { prompt, voiceoverEnabled = true, voiceName = 'Zephyr', aspectRatio = '16:9' } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required for video generation.' });
-    }
-
-    let scenes = [];
-
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        const sysPrompt = `You are a cinematic video director for Nexis AI Studio. Given a concept or storyline, create a 3-scene video storyboard. Return a JSON array with 3 objects. Each object MUST have:
-- "caption": A concise 3-5 word scene title (e.g. "Scene 1: Neon Highway Awakening")
-- "narration": 1 to 2 sentences of professional spoken narration for the voiceover
-- "duration": integer number of seconds (typically 4 or 5)
-- "visualPrompt": highly descriptive prompt describing this visual scene for image rendering
-Output ONLY the raw JSON array. No markdown backticks.`;
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: {
-            systemInstruction: sysPrompt,
-          },
-        });
-
-        const raw = response.text || '';
-        const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          scenes = parsed.slice(0, 3);
-        }
-      } catch (parseErr) {
-        console.warn('AI Storyboard generation fallback:', parseErr);
-      }
-    }
-
-    if (scenes.length === 0) {
-      scenes = [
-        {
-          caption: 'Opening Sequence: Horizon & Depth',
-          narration: `Initiating cinematic visual sequence for ${prompt}. Establishing structural depth and atmospheric illumination.`,
-          duration: 4,
-          visualPrompt: `Cinematic wide angle, ${prompt}, 8k resolution, volumetric lighting, photorealistic`,
-        },
-        {
-          caption: 'Dynamic Focal Shift: Kinetic Flow',
-          narration: 'Observe the focal trajectory as kinetic forces converge across the primary axis.',
-          duration: 4,
-          visualPrompt: `Dynamic motion closeup, ${prompt}, cinematic lighting, intricate textures, vivid color grading`,
-        },
-        {
-          caption: 'Panoramic Resolution: Convergence',
-          narration: 'Culminating in cohesive synthesis. Designed and orchestrated with precision by Nexis AI.',
-          duration: 4,
-          visualPrompt: `Grand epic cinematic wide shot, ${prompt}, masterwork composition, glowing atmosphere`,
-        },
-      ];
-    }
-
-    res.json({
-      title: prompt.slice(0, 50),
-      prompt,
-      scenes,
-      voiceoverEnabled: Boolean(voiceoverEnabled),
-      voiceName: voiceName || 'Zephyr',
-      aspectRatio: aspectRatio || '16:9',
-    });
-  } catch (err: any) {
-    console.error('Video storyboard error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate video storyboard.' });
-  }
 });
 
 const server = http.createServer(app);

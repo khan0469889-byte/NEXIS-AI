@@ -1,4 +1,4 @@
-export type ModelId = 'google-ai-pro' | 'gemini-4-argon' | 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'gemini-3.8-live';
+export type ModelId = 'google-ai-pro' | 'gemini-4-argon' | 'gemini-3.8-flash' | 'gemini-3.1-flash-lite' | 'gemini-3.5-flash-lite' | 'gemini-3.5-flash' | 'gemini-3.8-live';
 
 export type ProPersonaId = 'architect' | 'scientist' | 'engineer' | 'quant' | 'director';
 
@@ -23,20 +23,6 @@ export interface GroundingMetadata {
   groundingSupports?: any[];
 }
 
-export interface VideoData {
-  title: string;
-  prompt: string;
-  scenes: Array<{
-    caption: string;
-    narration: string;
-    duration: number;
-    imageUrl?: string;
-  }>;
-  voiceoverEnabled: boolean;
-  voiceName?: string;
-  aspectRatio: '16:9' | '9:16' | '1:1';
-}
-
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -48,8 +34,6 @@ export interface ChatMessage {
   groundingMetadata?: GroundingMetadata | null;
   isOffline?: boolean;
   offlineSource?: string;
-  imageUrl?: string;
-  videoData?: VideoData;
 }
 
 export interface ConversationSession {

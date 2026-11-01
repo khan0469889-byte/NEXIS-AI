@@ -16,11 +16,6 @@ import {
   Cpu,
   Layers,
   ArrowRight,
-  Download,
-  Film,
-  Play,
-  Pause,
-  Image as ImageIcon,
 } from 'lucide-react';
 
 interface ChatThreadProps {
@@ -193,71 +188,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                     </div>
                   )}
 
-                  {/* Render Generated Image (Nano Banana) */}
-                  {message.imageUrl && (
-                    <div className="mt-3 rounded-2xl overflow-hidden border border-amber-500/30 bg-black/80 p-2 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-amber-300 font-semibold px-2 pt-1">
-                        <span className="flex items-center gap-1.5 font-['Space_Grotesk']">
-                          <span>🍌</span>
-                          <span>Nano Banana Generated Image</span>
-                        </span>
-                        <a
-                          href={message.imageUrl}
-                          download={`nano-banana-${message.id}.png`}
-                          className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-200 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-lg transition-colors"
-                        >
-                          <Download className="h-3 w-3" />
-                          <span>Save PNG</span>
-                        </a>
-                      </div>
-                      <div className="relative rounded-xl overflow-hidden bg-neutral-950 flex items-center justify-center">
-                        <img
-                          src={message.imageUrl}
-                          alt="Nano Banana Output"
-                          className="w-full max-h-[420px] object-contain rounded-xl hover:scale-[1.01] transition-transform duration-200 cursor-pointer"
-                          onClick={() => window.open(message.imageUrl, '_blank')}
-                        />
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Render Generated Video (Text to Video with Voiceover) */}
-                  {message.videoData && (
-                    <div className="mt-3 rounded-2xl overflow-hidden border border-violet-500/30 bg-neutral-950 p-3 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-violet-300 font-semibold">
-                        <span className="flex items-center gap-1.5 font-['Space_Grotesk']">
-                          <Film className="h-4 w-4 text-violet-400" />
-                          <span>Cinematic Video Storyboard</span>
-                        </span>
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-mono font-bold ${
-                          message.videoData.voiceoverEnabled
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-neutral-800 text-neutral-400'
-                        }`}>
-                          {message.videoData.voiceoverEnabled ? 'VOICEOVER: ON' : 'VOICEOVER: OFF'}
-                        </span>
-                      </div>
-
-                      <div className="rounded-xl border border-neutral-800 bg-neutral-900/90 p-3 text-xs space-y-2">
-                        <p className="font-bold text-white text-sm">
-                          {message.videoData.title}
-                        </p>
-                        <div className="space-y-1.5">
-                          {message.videoData.scenes.map((scene, sIdx) => (
-                            <div key={sIdx} className="rounded-lg bg-neutral-950 p-2.5 border border-neutral-800/80">
-                              <div className="flex items-center justify-between text-[11px] font-bold text-amber-300 font-mono mb-1">
-                                <span>Scene {sIdx + 1}: {scene.caption}</span>
-                                <span className="text-neutral-500">{scene.duration}s</span>
-                              </div>
-                              <p className="text-neutral-300 text-xs italic">
-                                &ldquo;{scene.narration}&rdquo;
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Grounding Citations (if search was used) */}
                   {!isUser && message.groundingMetadata?.searchChunks && message.groundingMetadata.searchChunks.length > 0 && (

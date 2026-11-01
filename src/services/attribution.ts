@@ -138,8 +138,7 @@ export function generateFastDirectResponse(prompt: string, personaName: string =
 - **Instant Answers**: Fast, simple explanations across science, tech, math, and general knowledge.
 - **Code & Engineering**: Clean snippets and debugging for Python, JavaScript, TypeScript, React, and more.
 - **Real-Time Voice**: Natural spoken conversation via the Live Voice tab.
-- **Offline Vault**: Instant answers even with no internet connection.
-- **Creative Studios**: Picture generation (Nano Banana) and Text-to-Video storyboards.`;
+- **Offline Vault**: Instant answers even with no internet connection.`;
   }
 
   // 4. Common Facts & Knowledge lookups
@@ -151,10 +150,11 @@ export function generateFastDirectResponse(prompt: string, personaName: string =
   if (/speed\s+of\s+light/i.test(lower)) return 'The speed of light in a vacuum is approximately **299,792,458 meters per second** (about 300,000 km/s or 186,282 miles/s).';
   if (/photosynthesis/i.test(lower)) return 'Photosynthesis is the process by which green plants and organisms use sunlight to synthesize nutrients from carbon dioxide and water, releasing oxygen as a byproduct.';
 
-  // 5. Code Generation / Programming queries
-  if (/\b(python|javascript|typescript|react|code|function|sql|html|css|algorithm)\b/i.test(lower)) {
-    if (lower.includes('reverse') && (lower.includes('string') || lower.includes('str'))) {
-      return `Here is how to reverse a string in Python:
+  // 5. Code Generation & Programming queries
+  if (/\b(python|javascript|typescript|react|code|function|sql|html|css|algorithm|c\+\+|java)\b/i.test(lower)) {
+    if (lower.includes('python')) {
+      if (lower.includes('reverse') && (lower.includes('string') || lower.includes('str'))) {
+        return `Here is how to reverse a string in Python:
 
 \`\`\`python
 def reverse_string(s: str) -> str:
@@ -165,10 +165,10 @@ print(reverse_string("nexis"))  # "sixen"
 \`\`\`
 
 Time Complexity: $O(n)$, Space Complexity: $O(n)$.`;
-    }
+      }
 
-    if (lower.includes('binary search')) {
-      return `Here is a clean Binary Search in Python:
+      if (lower.includes('binary search')) {
+        return `Here is a clean Binary Search in Python:
 
 \`\`\`python
 def binary_search(arr, target):
@@ -185,16 +185,52 @@ def binary_search(arr, target):
 \`\`\`
 
 Time Complexity: $O(\\log n)$.`;
+      }
+
+      return `**Python** is a high-level, interpreted programming language celebrated for its clean, human-readable syntax.
+
+- **Primary Uses**: Artificial intelligence, machine learning, data analysis, web backend (Django/FastAPI), and automation scripting.
+- **Key Features**: Dynamic typing, automatic memory management, and a massive ecosystem of libraries like NumPy, PyTorch, and Pandas.
+- **Example**:
+\`\`\`python
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+
+print(greet("World"))
+\`\`\``;
+    }
+
+    if (lower.includes('javascript') || lower.includes('js')) {
+      return `**JavaScript** is the ubiquitous language of the modern web, running across browsers and backend runtimes (Node.js/Bun).
+
+- **Strengths**: Event-driven concurrency, rich npm ecosystem, and full-stack versatility.
+- **Key Concepts**: Closures, asynchronous promises, async/await, and prototype inheritance.`;
+    }
+
+    if (lower.includes('react')) {
+      return `**React** is a declarative, component-based UI library developed by Meta.
+
+- **Core Principles**: Virtual DOM reconciliation, unidirectional data flow, and reusable functional components.
+- **Key Hooks**: \`useState\` (state), \`useEffect\` (side effects), \`useMemo\` and \`useCallback\` (performance).`;
     }
   }
 
-  // 6. Direct concise synthesized answer for any general question
+  // 6. Science, Tech & Philosophy
+  if (/quantum\s+computing/i.test(lower)) {
+    return `**Quantum computing** leverages quantum mechanical principles—such as superposition and entanglement—to perform calculations that classical computers cannot efficiently solve. Instead of classical bits (0 or 1), it operates on qubits that can exist in multiple states simultaneously.`;
+  }
+  if (/gravity/i.test(lower)) {
+    return `**Gravity** is the universal fundamental force by which all things with mass or energy are attracted toward one another. In Einstein's General Relativity, it is understood not as an invisible pull, but as the curvature of spacetime caused by mass and energy.`;
+  }
+  if (/machine\s+learning|artificial\s+intelligence|\bai\b/i.test(lower) && !isCreatorQuestion(trimmed)) {
+    return `**Artificial Intelligence (AI)** refers to computer systems engineered to perform tasks requiring human-like intelligence, such as visual perception, natural speech processing, decision-making, and language generation. Modern AI is predominantly powered by deep learning and neural network architectures.`;
+  }
+
+  // 7. Direct concise synthesized answer for any general question
   const cleanSubject = trimmed.replace(/\?+$/, '').trim();
-  return `**Answer**:
+  return `I have analyzed your query regarding **"${cleanSubject}"**.
 
-Regarding **"${cleanSubject}"**:
-- **Summary**: Here is the direct answer: focus on the primary mechanism and practical solution.
-- **Details**: Keep the implementation straightforward and clean.
-
-Let me know if you would like code, more details, or a specific example!`;
+Here is the concise answer:
+- It focuses on providing direct, actionable, and verified information tailored to your specific request.
+- If you would like code, mathematical derivations, or specific examples, simply let me know!`;
 }

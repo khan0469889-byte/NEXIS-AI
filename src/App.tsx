@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ModelId, ProPersonaId, ChatMessage, ConversationSession, VideoData } from './types';
+import { ModelId, ProPersonaId, ChatMessage, ConversationSession } from './types';
 import { Header } from './components/Header';
 import { RealtimeDataBar } from './components/RealtimeDataBar';
 import { ChatThread } from './components/ChatThread';
@@ -7,8 +7,6 @@ import { ChatInput } from './components/ChatInput';
 import { LiveVoiceModal } from './components/LiveVoiceModal';
 import { OfflineVaultModal } from './components/OfflineVaultModal';
 import { ChatHistoryDrawer } from './components/ChatHistoryDrawer';
-import { NanoBananaModal } from './components/NanoBananaModal';
-import { TextToVideoModal } from './components/TextToVideoModal';
 import { sendChatMessage } from './services/geminiService';
 import { offlineVault } from './services/offlineVault';
 import { stripAttributionIfNotAsked } from './services/attribution';
@@ -51,8 +49,6 @@ export default function App() {
   const [isLiveVoiceOpen, setIsLiveVoiceOpen] = useState(false);
   const [isOfflineVaultOpen, setIsOfflineVaultOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isNanoBananaOpen, setIsNanoBananaOpen] = useState(false);
-  const [isVideoStudioOpen, setIsVideoStudioOpen] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
 
   // Initialize offline IndexedDB vault and check network
@@ -201,31 +197,7 @@ export default function App() {
     }
   };
 
-  // Insert generated Nano Banana Image into the chat thread
-  const handleInsertImageToChat = (imageUrl: string, prompt: string) => {
-    const imageMessage: ChatMessage = {
-      id: `msg-${Date.now()}-nanobanana`,
-      role: 'assistant',
-      content: `### 🍌 Nano Banana Studio Picture\n\nPrompt: *"${prompt}"*\n\nRendered with ultra-high resolution synthesis.`,
-      imageUrl,
-      timestamp: Date.now(),
-      modelUsed: 'Gemini Nano Banana Image Engine',
-    };
-    setMessages((prev) => [...prev, imageMessage]);
-  };
 
-  // Insert generated Text-to-Video Storyboard into the chat thread
-  const handleInsertVideoToChat = (videoData: VideoData) => {
-    const videoMessage: ChatMessage = {
-      id: `msg-${Date.now()}-video`,
-      role: 'assistant',
-      content: `### 🎬 ${videoData.title}\n\n**Visual Storyboard & Motion Sequence** (${videoData.scenes.length} cinematic scenes, Format: ${videoData.aspectRatio}, Voiceover: ${videoData.voiceoverEnabled ? 'ON (' + videoData.voiceName + ')' : 'OFF'})\n\nPrompt: *"${videoData.prompt}"*`,
-      videoData,
-      timestamp: Date.now(),
-      modelUsed: 'Nexis Cinematic Video Studio',
-    };
-    setMessages((prev) => [...prev, videoMessage]);
-  };
 
   // Switch to selected session from history
   const handleSelectSession = (sessionId: string) => {
@@ -333,7 +305,7 @@ export default function App() {
         isLoading={isLoading}
       />
 
-      {/* Input Bar with Plus button for Nano Banana and Text to Video */}
+      {/* Input Bar */}
       <ChatInput
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
@@ -346,8 +318,6 @@ export default function App() {
         onToggleGrounding={() => setEnableGrounding((prev) => !prev)}
         isOfflineMode={isOfflineMode}
         onOpenVault={() => setIsOfflineVaultOpen(true)}
-        onOpenNanoBanana={() => setIsNanoBananaOpen(true)}
-        onOpenTextToVideo={() => setIsVideoStudioOpen(true)}
       />
 
       {/* Chat History & Search Drawer */}
@@ -360,20 +330,6 @@ export default function App() {
         onDeleteSession={handleDeleteSession}
         onNewChat={handleNewChat}
         onClearAll={handleClearAllSessions}
-      />
-
-      {/* Nano Banana Image Generation Studio */}
-      <NanoBananaModal
-        isOpen={isNanoBananaOpen}
-        onClose={() => setIsNanoBananaOpen(false)}
-        onInsertToChat={handleInsertImageToChat}
-      />
-
-      {/* Text-to-Video Studio with Voiceover ON/OFF */}
-      <TextToVideoModal
-        isOpen={isVideoStudioOpen}
-        onClose={() => setIsVideoStudioOpen(false)}
-        onInsertToChat={handleInsertVideoToChat}
       />
 
       {/* Live Voice Conversation Modal (Gemini 3.8 Live API & Pro Speech) */}
